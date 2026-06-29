@@ -22,12 +22,14 @@ export interface NormalizedShopeeProductUrl {
 
 export interface GeneratedAffiliateLink {
   affiliateUrl: string;
+  shortUrl?: string;
   provider: AffiliateLinkProvider;
 }
 
 export interface LinkHistoryRecord {
   id: string;
   affiliateUrl?: string;
+  shortUrl?: string;
   createdAt: string;
   elapsedMs: number;
   error?: string;
