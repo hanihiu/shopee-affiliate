@@ -8,6 +8,7 @@ import {
   GeneratedAffiliateLink,
   NormalizedShopeeProductUrl,
 } from './link.types';
+import { shortenUrl } from './url-shortener';
 
 /* ---------- Web API response shape ---------- */
 
@@ -86,14 +87,7 @@ export class ShopeeAffiliateClient {
           this.logger.warn(
             'Tu dong fallback sang manual_redirect. Hay cap nhat SHOPEE_COOKIE som.',
           );
-          return {
-            affiliateUrl: this.buildManualRedirectLink(
-              productUrl,
-              affiliateId,
-              subIds,
-            ),
-            provider: 'manual_redirect',
-          };
+          return this.buildManualRedirectResult(productUrl, affiliateId, subIds);
         }
 
         // No fallback available – re-throw the original error
@@ -102,14 +96,7 @@ export class ShopeeAffiliateClient {
     }
 
     if (affiliateId) {
-      return {
-        affiliateUrl: this.buildManualRedirectLink(
-          productUrl,
-          affiliateId,
-          subIds,
-        ),
-        provider: 'manual_redirect',
-      };
+      return this.buildManualRedirectResult(productUrl, affiliateId, subIds);
     }
 
     throw new InternalServerErrorException(
@@ -327,6 +314,25 @@ export class ShopeeAffiliateClient {
   }
 
   /* ========== Manual redirect ========== */
+
+  /**
+   * Build a manual redirect affiliate link and attempt to shorten it.
+   * If shortening fails, affiliateUrl still contains the working long URL.
+   */
+  private async buildManualRedirectResult(
+    productUrl: NormalizedShopeeProductUrl,
+    affiliateId: string,
+    subIds: string[],
+  ): Promise<GeneratedAffiliateLink> {
+    const longUrl = this.buildManualRedirectLink(productUrl, affiliateId, subIds);
+    const shortened = await shortenUrl(longUrl);
+
+    return {
+      affiliateUrl: shortened ?? longUrl,
+      shortUrl: shortened ?? undefined,
+      provider: 'manual_redirect',
+    };
+  }
 
   private buildManualRedirectLink(
     productUrl: NormalizedShopeeProductUrl,
